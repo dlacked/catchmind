@@ -7,6 +7,7 @@ public class MyPoint{
 	int x = 0;
 	int y = 0;
 	Color pointColor;
+	int width = 0;
 	
 	MyPoint(){
 	}
@@ -19,6 +20,7 @@ public class MyPoint{
 		this.x = other.x;
 		this.y = other.y;
         this.pointColor = other.pointColor;
+        this.width = other.width;
 	}
 	
 	public void setX(int x) {
@@ -36,4 +38,7 @@ public class MyPoint{
 		this.pointColor = c;
 	}
 	
+	public void setWidth(int w) {
+		this.width = w;
+	}
 }
