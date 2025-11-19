@@ -17,6 +17,8 @@ public class EditorEx extends JFrame {
     public EditorEx() {
         setTitle("Editor");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        String answer = JOptionPane.showInputDialog(null, "답을 알려주세요.", "catchmind", JOptionPane.QUESTION_MESSAGE);
     
 		JMenuBar menubar = new JMenuBar();
 		
@@ -158,7 +160,7 @@ public class EditorEx extends JFrame {
 		list.setLayoutOrientation(JList.VERTICAL);
 		list.setFixedCellWidth(150);  
 		model.addElement("***************************************");
-		model.addElement("Admin: 댓글을 입력해주세요.");
+		model.addElement("Admin: 정답을 입력해주세요.");
 		model.addElement("***************************************");
 		
 		JScrollPane listScrollPane = new JScrollPane(list);
@@ -190,6 +192,17 @@ public class EditorEx extends JFrame {
 
                 String text = consolePane.getText();
                 model.addElement("User: " + text);
+                
+                if (text.equals(answer)) {
+            		model.addElement("***************************************");
+            		model.addElement("Admin: User가 정답을 맞췄습니다!");
+            		model.addElement("Admin: 정답 = " + answer);
+            		model.addElement("***************************************");
+                	if (drawPane.splineList != null) drawPane.splineList.clear();
+                	if (drawPane.currentSpline != null) drawPane.currentSpline.clear();
+                	drawPane.repaint();
+                }
+                
                 consolePane.setText("");
             }
         });
