@@ -287,6 +287,7 @@ public class EditorEx extends JFrame {
     				if (out != null) {
     					try {
     						out.write("PRESSED " + p.x + " " + p.y + " " + p.pointColor.getRGB() + " " + p.width + "\n");
+    						
     						out.flush();
     					} catch (IOException ele) {
     						
@@ -306,6 +307,7 @@ public class EditorEx extends JFrame {
     				if (out != null) {
     					try {
     						out.write("DRAGGING " + p.x + " " + p.y + " " + p.pointColor.getRGB() + " " + p.width + "\n");
+    						System.out.println(p.pointColor.getRGB());
     						out.flush();
     					} catch (IOException ele) {
     						
@@ -326,6 +328,7 @@ public class EditorEx extends JFrame {
 					g.setColor(spline.get(0).pointColor);
 		    		g2.setStroke(new BasicStroke(spline.get(0).width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 					g.drawLine(spline.get(0).x, spline.get(0).y, spline.get(0).x, spline.get(0).y);
+					
 					
 					continue;
 				}

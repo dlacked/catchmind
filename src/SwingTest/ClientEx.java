@@ -154,7 +154,7 @@ public class ClientEx extends JFrame {
 	                        System.out.println(receivedData);
 	                        String[] token = receivedData.split(" ");
 	                    	MyPoint p = new MyPoint(Integer.parseInt(token[1]), Integer.parseInt(token[2]));
-	                    	p.setColor(Color.BLACK);
+	                    	p.setColor(new Color(Integer.parseInt(token[3]), false));
 	            	   		p.setWidth(Integer.parseInt(token[4]));
 	            	   		if (receivedData.startsWith("PRESSED")) {
 	            	   			currentSpline = new Vector<>();
