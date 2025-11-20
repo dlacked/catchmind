@@ -1,5 +1,6 @@
 package SwingTest;
 import javax.swing.*;
+//import com.google.gson.Gson;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.BufferedReader;
@@ -35,28 +36,6 @@ public class EditorEx extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     
 		JMenuBar menubar = new JMenuBar();
-		
-		JMenu fileMenu = new JMenu("File");
-		JMenuItem openItem = new JMenuItem("Open");
-		JMenuItem saveItem = new JMenuItem("Save");
-		JMenuItem closeItem = new JMenuItem("Close");
-		fileMenu.add(openItem);
-		fileMenu.add(saveItem);
-		fileMenu.add(closeItem);
-		
-		menubar.add(fileMenu);
-		
-		
-		JMenu editMenu = new JMenu("Edit");
-		JMenuItem copyItem = new JMenuItem("Copy");
-		JMenuItem cutItem = new JMenuItem("Cut");
-		JMenuItem pasteItem = new JMenuItem("Paste");
-		editMenu.add(copyItem);
-		editMenu.add(cutItem);
-		editMenu.add(pasteItem);
-		
-		menubar.add(editMenu);
-		
 		JMenu penOption = new JMenu("Pen Option");
 		JMenuItem colorSelect = new JMenuItem("Pen Color");
 		JMenuItem widthInput = new JMenuItem("Pen Width");
@@ -213,28 +192,28 @@ public class EditorEx extends JFrame {
                 SwingUtilities.invokeLater(() -> model.addElement("Sys: 사용자를 기다리는 중...")); //GUI 컴포넌트 업데이트를 위함
                 
                 socket = listener.accept();
-                SwingUtilities.invokeLater(() -> model.addElement("Sys: User와 연결되었습니다."));
+                SwingUtilities.invokeLater(() -> model.addElement("Sys: Client와 연결되었습니다."));
                 
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
-                String currentAnswer = "";
+                String answer = "";
                 while(true) {
                 	while(true) {
 
-                        currentAnswer = JOptionPane.showInputDialog(null, "정답을 입력하세요.", "Server", JOptionPane.QUESTION_MESSAGE);
-                        if (currentAnswer != null && !currentAnswer.trim().isEmpty()) {
+                		answer = JOptionPane.showInputDialog(null, "정답을 입력하세요.", "Server", JOptionPane.QUESTION_MESSAGE);
+                        if (answer != null && !answer.trim().isEmpty()) {
 //                        	//
-//                            out.write(currentAnswer);
-//                            out.flush();
+                            out.write(answer + "\n");
+                            out.flush();
 //                            //
                             break;
                         }
                 		
                 	}
                     
-                    EditorEx.this.answer = currentAnswer;
-
+                    EditorEx.this.answer = answer;
+                    
                     String clientMessage;
                     while (true) {
                         clientMessage = in.readLine();
@@ -263,12 +242,14 @@ public class EditorEx extends JFrame {
                 
                 
             } catch (IOException e) {
-                SwingUtilities.invokeLater(() -> model.addElement("Sys: 서버/연결 오류 발생 - " + e.getMessage()));
+                
             } finally {
                 try {
                     if (socket != null) socket.close();
                     if (listener != null) listener.close();
-                } catch (IOException e) { /* 무시 */ }
+                } 
+                catch (IOException e) { 
+                }
             }
         }
     }
@@ -317,13 +298,6 @@ public class EditorEx extends JFrame {
     	   		}
     	   	});
     	   	
-//    	   	addKeyListener(new KeyAdapter() {
-//    	   		public void keyPressed(KeyEvent e) {
-//    	   			if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-//    	   				System.out.println("엔터");
-//    	   			}
-//    	   		}
-//    	   	});
     	}
     	
     	public void paintComponent(Graphics g) {
