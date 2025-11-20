@@ -11,11 +11,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 import SwingTest.MyPoint;
+import SwingTest.EditorEx.DrawingPanel;
+import SwingTest.EditorEx.ServerThread;
 
 import java.awt.Color;
 
-public class EditorEx extends JFrame {
-	
+public class ClientEx extends JFrame {
+
 	private Color currentColor = Color.BLACK; 
 	private DrawingPanel drawPane = null;
 	private int penWidth = 3;
@@ -23,15 +25,14 @@ public class EditorEx extends JFrame {
 //    private String nickname = "";
     private BufferedReader in = null;
 	private BufferedWriter out = null;
-	private ServerSocket listener = null;
 	private Socket socket = null;
-	private String clientMessage = null;
 	private DefaultListModel<String> model = new DefaultListModel<>();
 	private JScrollPane listScrollPane;
+	private JTextArea consolePane;
 	
-    public EditorEx() {
+    public ClientEx() {
     	
-    	setTitle("Server");
+    	setTitle("Client");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     
 		JMenuBar menubar = new JMenuBar();
@@ -121,7 +122,7 @@ public class EditorEx extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // JColorChooser를 사용하여 색상 선택
-            	currentColor = JColorChooser.showDialog(EditorEx.this, "Select Color", Color.BLACK);
+            	currentColor = JColorChooser.showDialog(ClientEx.this, "Select Color", Color.BLACK);
 
             }
         });
@@ -131,7 +132,7 @@ public class EditorEx extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				String inputWidth = null;
 				while (true) {
-					inputWidth = JOptionPane.showInputDialog(null, "펜의 굵기를 입력하세요.", "catchmind", JOptionPane.QUESTION_MESSAGE);
+					inputWidth = JOptionPane.showInputDialog(null, "펜의 굵기를 입력하세요.", "Server", JOptionPane.QUESTION_MESSAGE);
 					
 					if (inputWidth == null) {
 						return;
@@ -145,7 +146,7 @@ public class EditorEx extends JFrame {
 						
 					}
 				}
-				EditorEx.this.penWidth = Integer.parseInt(inputWidth);
+				ClientEx.this.penWidth = Integer.parseInt(inputWidth);
 			}
 		});
 		
@@ -158,44 +159,83 @@ public class EditorEx extends JFrame {
 
         drawPane = new DrawingPanel();
         
-//        //설레는 댓글창
-//        JTextArea  consolePane = new JTextArea();
-//        consolePane.setLineWrap(true);        // 자동 줄바꿈
-//        consolePane.setWrapStyleWord(true);
-//        JScrollPane consoleScrollPane = new JScrollPane(consolePane);
-//        consoleScrollPane.setPreferredSize(new Dimension(200, 100));
-//        consoleScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-//        c.add(consoleScrollPane, BorderLayout.SOUTH); 
+        //설레는 댓글창
+        this.consolePane = new JTextArea();
+        this.consolePane.setLineWrap(true);        // 자동 줄바꿈
+        this.consolePane.setWrapStyleWord(true);
+        JScrollPane consoleScrollPane = new JScrollPane(this.consolePane);
+        consoleScrollPane.setPreferredSize(new Dimension(200, 100));
+        consoleScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        c.add(consoleScrollPane, BorderLayout.SOUTH); 
         
+        model = new DefaultListModel<>();
         
 		JList<String> list = new JList<>(model);
 		list.setEnabled(false);
 		list.setLayoutOrientation(JList.VERTICAL);
 		list.setFixedCellWidth(150);  
 		model.addElement("***************************************");
-		model.addElement("Sys: 그림을 그려주세요.");
+		model.addElement("Sys: 정답을 입력해주세요.");
 		model.addElement("***************************************");
 		
-		listScrollPane = new JScrollPane(list);
+		this.listScrollPane = new JScrollPane(list);
+		this.listScrollPane.setPreferredSize(new Dimension(200, 100));
+        this.listScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		
-		listScrollPane.setPreferredSize(new Dimension(200, 100));
-        listScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		
-		c.add(listScrollPane, BorderLayout.EAST);
+		c.add(this.listScrollPane, BorderLayout.EAST);
 		
 		JPanel rightPanel = new JPanel(new BorderLayout());
 		rightPanel.add(listScrollPane, BorderLayout.CENTER);
-//		rightPanel.add(consoleScrollPane, BorderLayout.SOUTH);
+		rightPanel.add(consoleScrollPane, BorderLayout.SOUTH);
 
         drawPane.setBackground(Color.WHITE);
 		c.add(rightPanel, BorderLayout.EAST);
         c.add(drawPane, BorderLayout.CENTER);
         
+        
+        //텍스트박스 내 댓글을 ListPane에 올리기
+//        InputMap im = consolePane.getInputMap(JComponent.WHEN_FOCUSED);
+//        ActionMap am = consolePane.getActionMap();
+//
+//        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterPressed");
+//
+//        am.put("enterPressed", new AbstractAction() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//
+//                String text = consolePane.getText();
+//                
+//                try {
+//                    // 1. GUI에 메시지 등록 (Enter 키를 누르면 바로 등록되어야 함)
+//                	model.addElement(nickname + ": " + text);
+//            		consolePane.setText(""); // 입력창 초기화
+//                    
+//                    if (out != null) {
+//                    	out.write(text + "\n"); // 서버가 readLine() 하도록 \n 추가
+//                    	out.flush();
+//                    } else {
+//                        model.addElement("[오류: 서버에 연결되지 않음]");
+//                    }
+//                    
+//                    // 3. 스크롤 조정 (안정화)
+//                    SwingUtilities.invokeLater(() -> {
+//                        JScrollBar bar = listScrollPane.getVerticalScrollBar();
+//                        bar.setValue(bar.getMaximum());
+//                    });
+//	                    
+//                } catch (IOException ele) {
+//            		System.out.println("메시지 전송 오류: " + ele.getMessage());
+//            		model.addElement("[네트워크 전송 오류]");
+//                }
+//            }
+//        });
+//        
 		pack(); 
 		setSize(1024, 712);
         setVisible(true);
         
-        new ServerThread().start();
+
+        new ClientThread().start();
         
 //        while(true) {
 //        	nickname = JOptionPane.showInputDialog(null, "게임에 사용할 닉네임을 입력하세요.", nickname, JOptionPane.QUESTION_MESSAGE);
@@ -203,75 +243,88 @@ public class EditorEx extends JFrame {
 //        		break;
 //        	}
 //        }
+////        
+//        //server
+//        
+//		try {
+//			socket = new Socket("localhost", 9999); // 클라이언트 소켓 생성. 서버에 연결
+//			in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+//			out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+//			model.addElement("Admin: User와 연결되었습니다.");
+//				
+//		} catch (IOException e) {
+//			System.out.println(e.getMessage());
+//		}
     }
 
-    class ServerThread extends Thread {
-        @Override
-        public void run() {
-            try {
-                listener = new ServerSocket(9999);
-                SwingUtilities.invokeLater(() -> model.addElement("Sys: 사용자를 기다리는 중...")); //GUI 컴포넌트 업데이트를 위함
-                
-                socket = listener.accept();
-                SwingUtilities.invokeLater(() -> model.addElement("Sys: User와 연결되었습니다."));
-                
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-
-                String currentAnswer = "";
-                while(true) {
-                	while(true) {
-
-                        currentAnswer = JOptionPane.showInputDialog(null, "정답을 입력하세요.", "Server", JOptionPane.QUESTION_MESSAGE);
-                        if (currentAnswer != null && !currentAnswer.trim().isEmpty()) {
-//                        	//
-//                            out.write(currentAnswer);
-//                            out.flush();
-//                            //
-                            break;
-                        }
-                		
-                	}
-                    
-                    EditorEx.this.answer = currentAnswer;
-
-                    String clientMessage;
-                    while (true) {
-                        clientMessage = in.readLine();
-                        if (clientMessage == null) break; 
-                        // GUI 업데이트는 반드시 EDT에서
-                        final String msg = clientMessage;
-                        SwingUtilities.invokeLater(() -> {
-                            model.addElement("Client: " + msg);
-                            JScrollBar bar = listScrollPane.getVerticalScrollBar();
-                            bar.setValue(bar.getMaximum());
-                        });
-                        
-                        if (clientMessage.equals(answer)) {
-                    		model.addElement("***************************************");
-                    		model.addElement("Sys: Client가 정답을 맞췄습니다!");
-                    		model.addElement("***************************************");
-                        	if (drawPane.splineList != null) drawPane.splineList.clear();
-                        	if (drawPane.currentSpline != null) drawPane.currentSpline.clear();
-                        	drawPane.repaint();
-                        	break;
-                        }
-                        
-                    }
-                }
-                
-                
-                
-            } catch (IOException e) {
-                SwingUtilities.invokeLater(() -> model.addElement("Sys: 서버/연결 오류 발생 - " + e.getMessage()));
-            } finally {
-                try {
-                    if (socket != null) socket.close();
-                    if (listener != null) listener.close();
-                } catch (IOException e) { /* 무시 */ }
-            }
-        }
+    class ClientThread extends Thread {
+    	 @Override
+         public void run() {
+             try {
+                 socket = new Socket("localhost", 9999);
+                 SwingUtilities.invokeLater(() -> model.addElement("Sys: Server와 연결되었습니다."));
+                 
+                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                 out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                 
+                 InputMap im = consolePane.getInputMap(JComponent.WHEN_FOCUSED);
+                 ActionMap am = consolePane.getActionMap();
+                 
+//                 new AnswerReceiveThread().start();
+   
+                 im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enterPressed");
+   
+                 am.put("enterPressed", new AbstractAction() {
+                   @Override
+                   public void actionPerformed(ActionEvent e) {
+       
+                       String text = consolePane.getText();
+                       
+                       try {
+                           // 1. GUI에 메시지 등록 (Enter 키를 누르면 바로 등록되어야 함)
+                    	   model.addElement("Client: " + text);
+                    	   consolePane.setText(""); // 입력창 초기화
+                           
+                           if (out != null) {
+                        	   out.write(text + "\n"); // 서버가 readLine() 하도록 \n 추가
+                        	   out.flush();
+                           } else {
+                               model.addElement("[오류: 서버에 연결되지 않음]");
+                           }
+                           
+                           // 3. 스크롤 조정 (안정화)
+                           SwingUtilities.invokeLater(() -> {
+                               JScrollBar bar = listScrollPane.getVerticalScrollBar();
+                               bar.setValue(bar.getMaximum());
+                           });
+       	                    
+                       } catch (IOException ele) {
+                    	   System.out.println("메시지 전송 오류: " + ele.getMessage());
+                    	   model.addElement("[네트워크 전송 오류]");
+                       }
+                   }
+               });
+             } catch (IOException e) {
+                 SwingUtilities.invokeLater(() -> model.addElement("Sys: 서버/연결 오류 발생 - " + e.getMessage()));
+             }
+         }
     }
+    
+//    class AnswerReceiveThread extends Thread {
+//    	private BufferedReader answerIn;
+//    	public void run() {
+//    		try {
+//    			String answer;
+//    	    	while(true) {
+//    	    		answer = answerIn.readLine();
+//    	            System.out.println(answer);
+//    	    	}
+//    		} catch (IOException e) {
+//	            System.out.println(e.getMessage());
+//                
+//            }
+//    	}
+//    }
     
     //개중요
     class DrawingPanel extends JPanel{
@@ -298,8 +351,8 @@ public class EditorEx extends JFrame {
 					currentSpline = new Vector<>();
     				MyPoint p = new MyPoint(e.getX(), e.getY());
     				erasedSplineList.clear(); //새 Spline 작성 시 Redo 초기화(중첩 방지)
-        	   		p.setColor(EditorEx.this.currentColor);
-        	   		p.setWidth(EditorEx.this.penWidth);
+        	   		p.setColor(ClientEx.this.currentColor);
+        	   		p.setWidth(ClientEx.this.penWidth);
     				currentSpline.add(p);
     				splineList.add(currentSpline);
     				repaint();
@@ -310,8 +363,8 @@ public class EditorEx extends JFrame {
     	   	addMouseMotionListener(new MouseMotionAdapter() {
     	   		public void mouseDragged(MouseEvent e) {
     				MyPoint p = new MyPoint(e.getX(), e.getY());
-        	   		p.setColor(EditorEx.this.currentColor);
-        	   		p.setWidth(EditorEx.this.penWidth);
+        	   		p.setColor(ClientEx.this.currentColor);
+        	   		p.setWidth(ClientEx.this.penWidth);
     				currentSpline.add(p);
     				repaint();
     	   		}
@@ -355,6 +408,6 @@ public class EditorEx extends JFrame {
     }
     
     public static void main(String[] args) {
-        new EditorEx();
+        new ClientEx();
     }
 }
