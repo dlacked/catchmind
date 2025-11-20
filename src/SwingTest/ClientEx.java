@@ -152,7 +152,6 @@ public class ClientEx extends JFrame {
     				final String receivedData = in.readLine();
                     if (receivedData == null) break;
                     SwingUtilities.invokeLater(() -> {
-                        System.out.println(receivedData);
 	                    if (receivedData.startsWith("PRESSED") || receivedData.startsWith("DRAGGING")) {
 	                        String[] token = receivedData.split(" ");
 	                    	MyPoint p = new MyPoint(Integer.parseInt(token[1]), Integer.parseInt(token[2]));

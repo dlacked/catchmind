@@ -38,7 +38,7 @@ public class EditorEx extends JFrame {
 		JMenuBar menubar = new JMenuBar();
 		JMenu penOption = new JMenu("Pen Option");
 		JMenuItem colorSelect = new JMenuItem("Pen Color");
-		JMenuItem widthInput = new JMenuItem("Pen Width");
+		JMenuItem widthInput = new JMenuItem("Line Width");
 		
 		JMenu eraserOption = new JMenu("Eraser");
 		JMenuItem undo = new JMenuItem("Undo");
@@ -202,6 +202,9 @@ public class EditorEx extends JFrame {
                 
                 socket = listener.accept();
                 SwingUtilities.invokeLater(() -> model.addElement("Client와 연결되었습니다."));
+            	if (drawPane.splineList != null) drawPane.splineList.clear();
+            	if (drawPane.currentSpline != null) drawPane.currentSpline.clear();
+            	drawPane.repaint();
                 
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
