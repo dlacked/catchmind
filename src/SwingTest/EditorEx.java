@@ -80,8 +80,6 @@ public class EditorEx extends JFrame {
             		drawPane.erasedSplineList.remove(drawPane.erasedSplineList.size()-1);
                 	drawPane.repaint();
             	}
-            	System.out.println("splineList:" + drawPane.splineList.size());
-            	System.out.println("erasedSplineList:" + drawPane.erasedSplineList.size());
             	
             }
         });
@@ -152,7 +150,7 @@ public class EditorEx extends JFrame {
 		list.setLayoutOrientation(JList.VERTICAL);
 		list.setFixedCellWidth(150);  
 		model.addElement("***************************************");
-		model.addElement("Sys: 그림을 그려주세요.");
+		model.addElement("그림을 그려주세요.");
 		model.addElement("***************************************");
 		
 		listScrollPane = new JScrollPane(list);
@@ -189,10 +187,10 @@ public class EditorEx extends JFrame {
         public void run() {
             try {
                 listener = new ServerSocket(9999);
-                SwingUtilities.invokeLater(() -> model.addElement("Sys: 사용자를 기다리는 중...")); //GUI 컴포넌트 업데이트를 위함
+                SwingUtilities.invokeLater(() -> model.addElement("사용자를 기다리는 중...")); //GUI 컴포넌트 업데이트를 위함
                 
                 socket = listener.accept();
-                SwingUtilities.invokeLater(() -> model.addElement("Sys: Client와 연결되었습니다."));
+                SwingUtilities.invokeLater(() -> model.addElement("Client와 연결되었습니다."));
                 
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -228,7 +226,7 @@ public class EditorEx extends JFrame {
                         
                         if (clientMessage.equals(answer)) {
                     		model.addElement("***************************************");
-                    		model.addElement("Sys: Client가 정답을 맞췄습니다!");
+                    		model.addElement("Client가 정답을 맞췄습니다!");
                     		model.addElement("***************************************");
                         	if (drawPane.splineList != null) drawPane.splineList.clear();
                         	if (drawPane.currentSpline != null) drawPane.currentSpline.clear();
@@ -253,6 +251,7 @@ public class EditorEx extends JFrame {
             }
         }
     }
+
     
     //개중요
     class DrawingPanel extends JPanel{
@@ -284,6 +283,15 @@ public class EditorEx extends JFrame {
     				currentSpline.add(p);
     				splineList.add(currentSpline);
     				repaint();
+    				
+    				if (out != null) {
+    					try {
+    						out.write("PRESSED " + p.x + " " + p.y + " " + p.pointColor.getRGB() + " " + p.width + "\n");
+    						out.flush();
+    					} catch (IOException ele) {
+    						
+    					}
+    				}
         		}
         		
     	   	});	
@@ -295,6 +303,14 @@ public class EditorEx extends JFrame {
         	   		p.setWidth(EditorEx.this.penWidth);
     				currentSpline.add(p);
     				repaint();
+    				if (out != null) {
+    					try {
+    						out.write("DRAGGING " + p.x + " " + p.y + " " + p.pointColor.getRGB() + " " + p.width + "\n");
+    						out.flush();
+    					} catch (IOException ele) {
+    						
+    					}
+    				}
     	   		}
     	   	});
     	   	

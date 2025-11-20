@@ -14,8 +14,6 @@ import SwingTest.MyPoint;
 import SwingTest.EditorEx.DrawingPanel;
 import SwingTest.EditorEx.ServerThread;
 
-import java.awt.Color;
-
 public class ClientEx extends JFrame {
 
 	private Color currentColor = Color.BLACK; 
@@ -28,6 +26,9 @@ public class ClientEx extends JFrame {
 	private DefaultListModel<String> model = new DefaultListModel<>();
 	private JScrollPane listScrollPane;
 	private JTextArea consolePane;
+	private Vector<Vector<MyPoint>> splineList;
+	private Vector<Vector<MyPoint>> erasedSplineList;
+	private Vector<MyPoint> currentSpline = null;
 	
     public ClientEx() {
     	
@@ -55,7 +56,7 @@ public class ClientEx extends JFrame {
 		list.setLayoutOrientation(JList.VERTICAL);
 		list.setFixedCellWidth(150);  
 		model.addElement("***************************************");
-		model.addElement("Sys: 정답을 입력해주세요.");
+		model.addElement("정답을 입력해주세요.");
 		model.addElement("***************************************");
 		
 		this.listScrollPane = new JScrollPane(list);
@@ -86,12 +87,13 @@ public class ClientEx extends JFrame {
          public void run() {
              try {
                  socket = new Socket("localhost", 9999);
-                 SwingUtilities.invokeLater(() -> model.addElement("Sys: Server와 연결되었습니다."));
+                 SwingUtilities.invokeLater(() -> model.addElement("Server와 연결되었습니다."));
 
                  in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                  out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
                  
                  new ReceiveThread(in).start();
+//                 new DrawingThread(in).start();
                  
                  InputMap im = consolePane.getInputMap(JComponent.WHEN_FOCUSED);
                  ActionMap am = consolePane.getActionMap();
@@ -112,7 +114,7 @@ public class ClientEx extends JFrame {
                            if (out != null) {
                         	   if (text.equals(answer)) {
 	                           		model.addElement("***************************************");
-	                        		model.addElement("Sys: Client가 정답을 맞췄습니다!");
+	                        		model.addElement("Client가 정답을 맞췄습니다!");
 	                        		model.addElement("***************************************");
                         	   }
                         	   out.write(text + "\n"); // 서버가 readLine() 하도록 \n 추가
@@ -143,30 +145,78 @@ public class ClientEx extends JFrame {
     	
     	@Override
     	public void run() {
-    		String receivedAnswer;
     		try {
     			while(true) {
-    				receivedAnswer = in.readLine();
-                    if (receivedAnswer == null) break; 
-                    ClientEx.this.answer = receivedAnswer;
+    				final String receivedData = in.readLine();
+                    if (receivedData == null) break;
+                    SwingUtilities.invokeLater(() -> {
+	                    if (receivedData.startsWith("PRESSED") || receivedData.startsWith("DRAGGING")) {
+	                        System.out.println(receivedData);
+	                        String[] token = receivedData.split(" ");
+	                    	MyPoint p = new MyPoint(Integer.parseInt(token[1]), Integer.parseInt(token[2]));
+	                    	p.setColor(Color.BLACK);
+	            	   		p.setWidth(Integer.parseInt(token[4]));
+	            	   		if (receivedData.startsWith("PRESSED")) {
+	            	   			currentSpline = new Vector<>();
+	            	   			splineList.add(currentSpline);
+	            	   		}
+	            	   		currentSpline.add(p);
+	            	   		drawPane.repaint();
+	                    } else {
+	                        ClientEx.this.answer = receivedData;
+	                    }
+                    });
     			}
-    			// GUI 업데이트는 반드시 EDT에서
                 
     		} catch (IOException e) {
     			
     		}
     	}
     }
-    
 
     //개중요
     class DrawingPanel extends JPanel{
    	
-//    	private Vector<Vector<MyPoint>> splineList;
-//    	private Vector<Vector<MyPoint>> erasedSplineList;
-//    	private Vector<MyPoint> currentSpline = null;
+    	
+    	MyPoint start = null; 
+    	MyPoint end = null; 
+    	
+    	DrawingPanel(){
+    		splineList = new Vector<Vector<MyPoint>>();
+    		erasedSplineList = new Vector<Vector<MyPoint>>();
+    		start = new MyPoint();
+    		end = new MyPoint();
+    	}
+    	
+    	public void paintComponent(Graphics g) {
+    		super.paintComponent(g);
+			
+			for(Vector<MyPoint> spline : splineList) {
+				Graphics2D g2 = (Graphics2D) g;
+				
+				if (spline.size() == 1) {
+					g.setColor(spline.get(0).pointColor);
+		    		g2.setStroke(new BasicStroke(spline.get(0).width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+					g.drawLine(spline.get(0).x, spline.get(0).y, spline.get(0).x, spline.get(0).y);
+					
+					continue;
+				}
+				
+				for (int i = 1; i < spline.size(); i++) {
+					MyPoint temp1 = spline.get(i-1);
+					MyPoint temp2 = spline.get(i);
+					g.setColor(temp1.pointColor);
+		    		g2.setStroke(new BasicStroke(temp1.width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+					g.drawLine(temp1.x, temp1.y, temp2.x, temp2.y);
+				}
+			}
+
+			
+    	}
 
     }	
+    
+    
     
     public static void main(String[] args) {
         new ClientEx();
