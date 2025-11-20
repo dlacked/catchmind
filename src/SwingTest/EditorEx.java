@@ -64,10 +64,18 @@ public class EditorEx extends JFrame {
             	if (drawPane.splineList.size() != 0) {
             		drawPane.erasedSplineList.add(drawPane.splineList.get(drawPane.splineList.size()-1));
             		drawPane.splineList.remove(drawPane.splineList.size()-1);
+    				
+    				if (out != null) {
+    					try {
+    						out.write("UNDO" + "\n");
+    						out.flush();
+    					} catch (IOException ele) {
+    						
+    					}
+    				}
+            		
                 	drawPane.repaint();
             	}
-//            	System.out.println("splineList:" + drawPane.splineList.size());
-//            	System.out.println("erasedSplineList:" + drawPane.erasedSplineList.size());
             	
             }
         });
@@ -79,6 +87,15 @@ public class EditorEx extends JFrame {
             		drawPane.splineList.add(drawPane.erasedSplineList.get(drawPane.erasedSplineList.size()-1));
             		drawPane.erasedSplineList.remove(drawPane.erasedSplineList.size()-1);
                 	drawPane.repaint();
+
+    				if (out != null) {
+    					try {
+    						out.write("REDO" + "\n");
+    						out.flush();
+    					} catch (IOException ele) {
+    						
+    					}
+    				}
             	}
             	
             }
@@ -90,6 +107,16 @@ public class EditorEx extends JFrame {
             	if (drawPane.splineList != null) drawPane.splineList.clear();
             	if (drawPane.currentSpline != null) drawPane.currentSpline.clear();
             	drawPane.repaint();
+            	
+
+				if (out != null) {
+					try {
+						out.write("ERASEALL" + "\n");
+						out.flush();
+					} catch (IOException ele) {
+						
+					}
+				}
             }
         });
 		
@@ -127,23 +154,13 @@ public class EditorEx extends JFrame {
 		});
 		
 		
-        
-        //layout
+   
         Container c = getContentPane();
         
         c.setLayout(new BorderLayout());
 
         drawPane = new DrawingPanel();
-        
-//        //설레는 댓글창
-//        JTextArea  consolePane = new JTextArea();
-//        consolePane.setLineWrap(true);        // 자동 줄바꿈
-//        consolePane.setWrapStyleWord(true);
-//        JScrollPane consoleScrollPane = new JScrollPane(consolePane);
-//        consoleScrollPane.setPreferredSize(new Dimension(200, 100));
-//        consoleScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-//        c.add(consoleScrollPane, BorderLayout.SOUTH); 
-        
+
         
 		JList<String> list = new JList<>(model);
 		list.setEnabled(false);
@@ -174,12 +191,6 @@ public class EditorEx extends JFrame {
         
         new ServerThread().start();
         
-//        while(true) {
-//        	nickname = JOptionPane.showInputDialog(null, "게임에 사용할 닉네임을 입력하세요.", nickname, JOptionPane.QUESTION_MESSAGE);
-//        	if (!nickname.equals("")) {
-//        		break;
-//        	}
-//        }
     }
 
     class ServerThread extends Thread {
@@ -272,12 +283,10 @@ public class EditorEx extends JFrame {
     		
     	   	addMouseListener(new MouseAdapter(){
         		public void mousePressed(MouseEvent e) {
-//        			start.x = e.getX();
-//        			start.y = e.getY();
 				
 					currentSpline = new Vector<>();
     				MyPoint p = new MyPoint(e.getX(), e.getY());
-    				erasedSplineList.clear(); //새 Spline 작성 시 Redo 초기화(중첩 방지)
+    				erasedSplineList.clear(); //새 Spline 작성 시 Redo 초기화
         	   		p.setColor(EditorEx.this.currentColor);
         	   		p.setWidth(EditorEx.this.penWidth);
     				currentSpline.add(p);
@@ -307,7 +316,6 @@ public class EditorEx extends JFrame {
     				if (out != null) {
     					try {
     						out.write("DRAGGING " + p.x + " " + p.y + " " + p.pointColor.getRGB() + " " + p.width + "\n");
-    						System.out.println(p.pointColor.getRGB());
     						out.flush();
     					} catch (IOException ele) {
     						

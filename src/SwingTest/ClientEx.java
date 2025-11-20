@@ -107,7 +107,7 @@ public class ClientEx extends JFrame {
                        String text = consolePane.getText();
                        
                        try {
-                           // 1. GUI에 메시지 등록 (Enter 키를 누르면 바로 등록되어야 함)
+                          
                     	   model.addElement("Client: " + text);
                     	   consolePane.setText(""); // 입력창 초기화
                            
@@ -116,12 +116,14 @@ public class ClientEx extends JFrame {
 	                           		model.addElement("***************************************");
 	                        		model.addElement("Client가 정답을 맞췄습니다!");
 	                        		model.addElement("***************************************");
+	    	                    	if (splineList != null) splineList.clear();
+	    	                    	if (currentSpline != null) currentSpline.clear();
+	    	                    	drawPane.repaint();
                         	   }
-                        	   out.write(text + "\n"); // 서버가 readLine() 하도록 \n 추가
+                        	   out.write(text + "\n");
                         	   out.flush();
                            }
                            
-                           // 3. 스크롤 조정 (안정화)
                            SwingUtilities.invokeLater(() -> {
                                JScrollBar bar = listScrollPane.getVerticalScrollBar();
                                bar.setValue(bar.getMaximum());
@@ -150,8 +152,8 @@ public class ClientEx extends JFrame {
     				final String receivedData = in.readLine();
                     if (receivedData == null) break;
                     SwingUtilities.invokeLater(() -> {
+                        System.out.println(receivedData);
 	                    if (receivedData.startsWith("PRESSED") || receivedData.startsWith("DRAGGING")) {
-	                        System.out.println(receivedData);
 	                        String[] token = receivedData.split(" ");
 	                    	MyPoint p = new MyPoint(Integer.parseInt(token[1]), Integer.parseInt(token[2]));
 	                    	p.setColor(new Color(Integer.parseInt(token[3]), false));
@@ -162,7 +164,20 @@ public class ClientEx extends JFrame {
 	            	   		}
 	            	   		currentSpline.add(p);
 	            	   		drawPane.repaint();
-	                    } else {
+	                    } else if (receivedData.equals("UNDO")) {
+	                		erasedSplineList.add(splineList.get(splineList.size()-1));
+	                		splineList.remove(splineList.size()-1);
+	                    	drawPane.repaint();
+	                    } else if (receivedData.equals("REDO")) {
+	                		splineList.add(erasedSplineList.get(erasedSplineList.size()-1));
+	                		erasedSplineList.remove(erasedSplineList.size()-1);
+	                    	drawPane.repaint();
+	                    } else if (receivedData.equals("ERASEALL")) {
+	                    	if (splineList != null) splineList.clear();
+	                    	if (currentSpline != null) currentSpline.clear();
+	                    	drawPane.repaint();
+	                    }
+	                    else {
 	                        ClientEx.this.answer = receivedData;
 	                    }
                     });
